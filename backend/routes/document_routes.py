@@ -119,13 +119,16 @@ async def get_document(
     return document
 
 @router.post("/{document_id}/process")
-async def process_document_sync(
+def process_document_sync(
     document_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Process a document synchronously (runs in a thread to not block)"""
-    import threading
+    """Process a document synchronously"""
+    # Import here to avoid circular imports
+    from ocr_engines import OCREngine
+    from llm_processor import LLMProcessor
+    from datetime import datetime, timezone
     
     # Get document and verify ownership
     document = db.query(Document).filter(
@@ -139,26 +142,165 @@ async def process_document_sync(
             detail="Document not found"
         )
     
-    # Update status to processing
-    document.status = DocumentStatus.PROCESSING
-    db.commit()
-    
-    # Process in background thread
-    def process_in_thread():
-        import sys
-        sys.path.insert(0, '/app')
-        from workers.tasks import process_document_sync as process_func
-        process_func(document_id)
-    
-    thread = threading.Thread(target=process_in_thread)
-    thread.daemon = True
-    thread.start()
-    
-    return {
-        "message": "Document processing started",
-        "document_id": document_id,
-        "status": "processing"
-    }
+    try:
+        # Update status to processing
+        document.status = DocumentStatus.PROCESSING
+        document.processing_started_at = datetime.now(timezone.utc)
+        db.commit()
+        
+        # Add processing log
+        log = ProcessingLog(
+            document_id=document_id,
+            stage='processing_start',
+            message=f'Started document processing',
+            level='INFO'
+        )
+        db.add(log)
+        db.commit()
+        
+        # Initialize processors
+        ocr_engine = OCREngine()
+        llm_processor = LLMProcessor()
+        
+        # Run OCR
+        log = ProcessingLog(
+            document_id=document_id,
+            stage='ocr',
+            message='Starting OCR processing',
+            level='INFO'
+        )
+        db.add(log)
+        db.commit()
+        
+        ocr_result = ocr_engine.process_with_routing(document.file_path)
+        best_ocr = ocr_result['best_result']
+        
+        log = ProcessingLog(
+            document_id=document_id,
+            stage='ocr',
+            message=f'OCR completed with {best_ocr["engine"]} (confidence: {best_ocr["confidence"]:.2f})',
+            level='INFO'
+        )
+        db.add(log)
+        db.commit()
+        
+        # Process with LLM if schema exists
+        if document.form_schema_id:
+            # Get form fields
+            fields = db.query(FormField).filter(FormField.schema_id == document.form_schema_id).all()
+            
+            if fields:
+                log = ProcessingLog(
+                    document_id=document_id,
+                    stage='llm',
+                    message='Starting LLM extraction',
+                    level='INFO'
+                )
+                db.add(log)
+                db.commit()
+                
+                field_dicts = [
+                    {
+                        'field_name': f.field_name,
+                        'field_label': f.field_label,
+                        'field_type': f.field_type,
+                        'is_required': f.is_required
+                    }
+                    for f in fields
+                ]
+                
+                # Process with LLM
+                llm_result = llm_processor.process_with_model(
+                    'gpt-4o',
+                    best_ocr['text'],
+                    field_dicts,
+                    ocr_confidence=best_ocr['confidence']
+                )
+                
+                log = ProcessingLog(
+                    document_id=document_id,
+                    stage='llm',
+                    message=f'LLM processing completed with {llm_result["model"]}',
+                    level='INFO'
+                )
+                db.add(log)
+                db.commit()
+                
+                # Validate extracted data
+                validation_result = llm_processor.validate_extracted_data(
+                    llm_result['extracted_fields'],
+                    field_dicts
+                )
+                
+                if validation_result['errors']:
+                    log = ProcessingLog(
+                        document_id=document_id,
+                        stage='validation',
+                        message=f"Validation errors: {', '.join(validation_result['errors'][:3])}",
+                        level='WARNING'
+                    )
+                    db.add(log)
+                    db.commit()
+                
+                # Create field values
+                for field in fields:
+                    field_name = field.field_name
+                    extracted_value = llm_result['extracted_fields'].get(field_name, '')
+                    confidence = llm_result['extracted_fields'].get(f'{field_name}_confidence', 0)
+                    
+                    field_val = validation_result['field_validations'].get(field_name, {})
+                    has_errors = len(field_val.get('errors', [])) > 0
+                    
+                    field_value = FieldValue(
+                        document_id=document.id,
+                        field_id=field.id,
+                        extracted_value=extracted_value,
+                        normalized_value=extracted_value,
+                        confidence_score=confidence,
+                        needs_review=confidence < 0.8 or has_errors
+                    )
+                    db.add(field_value)
+                
+                document.overall_confidence = llm_result['overall_confidence']
+        else:
+            document.overall_confidence = best_ocr['confidence']
+        
+        # Update document status
+        document.status = DocumentStatus.COMPLETED
+        document.processing_completed_at = datetime.now(timezone.utc)
+        
+        log = ProcessingLog(
+            document_id=document_id,
+            stage='completed',
+            message='Document processing completed successfully',
+            level='INFO'
+        )
+        db.add(log)
+        db.commit()
+        
+        return {
+            "message": "Document processing completed",
+            "document_id": document_id,
+            "status": "completed"
+        }
+        
+    except Exception as e:
+        document.status = DocumentStatus.FAILED
+        document.processing_completed_at = datetime.now(timezone.utc)
+        
+        log = ProcessingLog(
+            document_id=document_id,
+            stage='error',
+            message=f'Processing failed: {str(e)}',
+            level='ERROR'
+        )
+        db.add(log)
+        db.commit()
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Processing failed: {str(e)}"
+        )
 
 @router.get("/{document_id}/progress")
 async def get_processing_progress(
