@@ -118,11 +118,32 @@ def process_document(document_id: int):
                 db.add(llm_record)
                 db.commit()
                 
+                # Validate extracted data
+                validation_result = llm_processor.validate_extracted_data(
+                    llm_result['extracted_fields'],
+                    field_dicts
+                )
+                
+                # Log validation results
+                if validation_result['errors']:
+                    log = ProcessingLog(
+                        document_id=document.id,
+                        stage='validation',
+                        message=f"Validation errors: {', '.join(validation_result['errors'][:3])}",
+                        level='WARNING'
+                    )
+                    db.add(log)
+                    db.commit()
+                
                 # Create field values
                 for field in fields:
                     field_name = field.field_name
                     extracted_value = llm_result['extracted_fields'].get(field_name, '')
                     confidence = llm_result['extracted_fields'].get(f'{field_name}_confidence', 0)
+                    
+                    # Check field-specific validation
+                    field_val = validation_result['field_validations'].get(field_name, {})
+                    has_errors = len(field_val.get('errors', [])) > 0
                     
                     field_value = FieldValue(
                         document_id=document.id,
@@ -130,7 +151,8 @@ def process_document(document_id: int):
                         extracted_value=extracted_value,
                         normalized_value=extracted_value,
                         confidence_score=confidence,
-                        needs_review=confidence < 0.8
+                        needs_review=confidence < 0.8 or has_errors,
+                        validation_errors=field_val.get('errors', []) if has_errors else None
                     )
                     db.add(field_value)
                 
