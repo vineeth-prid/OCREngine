@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { adminAPI } from '../services/api';
+import { adminAPI, llmAPI } from '../services/api';
 
 function AdminPanel({ user, onLogout }) {
   const [stats, setStats] = useState(null);
