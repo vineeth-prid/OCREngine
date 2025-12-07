@@ -12,6 +12,7 @@ import { authAPI, userAPI } from './services/api';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [userRoles, setUserRoles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
