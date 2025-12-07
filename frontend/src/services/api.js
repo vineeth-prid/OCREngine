@@ -86,6 +86,7 @@ export const documentAPI = {
   process: (id) => api.post(`/api/documents/${id}/process`),
   delete: (id) => api.delete(`/api/documents/${id}`),
   getLogs: (id) => api.get(`/api/documents/${id}/logs`),
+  getFields: (id) => api.get(`/api/documents/${id}/fields`),
 };
 
 export const userAPI = {

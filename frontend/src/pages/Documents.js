@@ -6,6 +6,8 @@ function Documents({ user, onLogout }) {
   const [documents, setDocuments] = useState([]);
   const [schemas, setSchemas] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [extractedFields, setExtractedFields] = useState([]);
+  const [processingLogs, setProcessingLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -62,10 +64,17 @@ function Documents({ user, onLogout }) {
 
   const handleViewDocument = async (doc) => {
     try {
-      const response = await documentAPI.get(doc.id);
-      setSelectedDocument(response.data);
+      const [detailRes, fieldsRes, logsRes] = await Promise.all([
+        documentAPI.get(doc.id),
+        documentAPI.getFields(doc.id),
+        documentAPI.getLogs(doc.id),
+      ]);
+      setSelectedDocument(detailRes.data);
+      setExtractedFields(fieldsRes.data || []);
+      setProcessingLogs(logsRes.data || []);
     } catch (error) {
       console.error('Error loading document details:', error);
+      alert('Failed to load document details');
     }
   };
 
@@ -256,27 +265,76 @@ function Documents({ user, onLogout }) {
                   </div>
                 </div>
 
-                {/* Extracted Data - will be populated by backend */}
+                {/* Extracted Data */}
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Extracted Data</h3>
-                  {selectedDocument.form_schema_id ? (
+                  {extractedFields.length > 0 ? (
                     <div className="space-y-3">
-                      <p className="text-sm text-gray-600 mb-3">Form-based extraction is being processed...</p>
-                      <div className="p-4 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-900">
-                          Data has been extracted according to your form template. Field values will be displayed here once the backend API is updated.
-                        </p>
-                      </div>
+                      {extractedFields.map((field) => (
+                        <div key={field.field_id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-700">{field.field_label}</p>
+                              <p className="text-lg text-gray-900 mt-1">
+                                {field.final_value || field.normalized_value || field.extracted_value || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="text-xs text-gray-500">Confidence</p>
+                              <p className={`text-sm font-semibold ${
+                                field.confidence_score >= 0.8 ? 'text-green-600' :
+                                field.confidence_score >= 0.5 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {(field.confidence_score * 100).toFixed(1)}%
+                              </p>
+                              {field.needs_review && (
+                                <span className="inline-block mt-1 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                                  Needs Review
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-2">Raw Text Extraction:</p>
-                      <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                        OCR text extraction completed. Full text will be available once the extraction results API is implemented.
+                      <p className="text-sm text-gray-600">
+                        {selectedDocument.status === 'completed' ? 
+                          'No structured data extracted. Document was processed without a form template.' :
+                          selectedDocument.status === 'processing' ?
+                          'Document is currently being processed...' :
+                          selectedDocument.status === 'failed' ?
+                          'Processing failed. Check logs for details.' :
+                          'Document processing has not been completed yet.'
+                        }
                       </p>
                     </div>
                   )}
                 </div>
+
+                {/* Processing Logs */}
+                {processingLogs.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Processing Logs</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                      <div className="space-y-2">
+                        {processingLogs.map((log) => (
+                          <div key={log.id} className="text-sm">
+                            <span className={`inline-block w-16 font-medium ${
+                              log.level === 'ERROR' ? 'text-red-600' :
+                              log.level === 'WARNING' ? 'text-yellow-600' : 'text-blue-600'
+                            }`}>
+                              [{log.level}]
+                            </span>
+                            <span className="text-gray-600 ml-2">{log.stage}:</span>
+                            <span className="text-gray-900 ml-2">{log.message}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   onClick={() => setSelectedDocument(null)}
