@@ -77,6 +77,10 @@ class OCREngine:
         # Set tesseract path
         pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
         
+        # Handle PDF conversion if needed
+        if image_path.lower().endswith('.pdf'):
+            image_path = self.convert_pdf_to_image(image_path)
+        
         img = Image.open(image_path)
         
         # Get text with confidence
