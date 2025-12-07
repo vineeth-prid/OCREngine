@@ -5,8 +5,10 @@ import { adminAPI, llmAPI } from '../services/api';
 function AdminPanel({ user, onLogout }) {
   const [stats, setStats] = useState(null);
   const [configs, setConfigs] = useState([]);
+  const [llmStatus, setLlmStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [testingConnection, setTestingConnection] = useState(false);
 
   useEffect(() => {
     loadData();
