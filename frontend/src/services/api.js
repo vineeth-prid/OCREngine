@@ -84,6 +84,7 @@ export const documentAPI = {
   list: (params) => api.get('/api/documents/', { params }),
   get: (id) => api.get(`/api/documents/${id}`),
   process: (id) => api.post(`/api/documents/${id}/process`),
+  getProgress: (id) => api.get(`/api/documents/${id}/progress`),
   delete: (id) => api.delete(`/api/documents/${id}`),
   getLogs: (id) => api.get(`/api/documents/${id}/logs`),
   getFields: (id) => api.get(`/api/documents/${id}/fields`),
