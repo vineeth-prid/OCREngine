@@ -1,3 +1,4 @@
+aiofiles==25.1.0
 aistudio-sdk==0.3.8
 alembic==1.14.0
 amqp==5.3.1
