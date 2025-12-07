@@ -33,7 +33,14 @@ function Register({ onLogin }) {
 
     try {
       const response = await authAPI.register(formData);
-      onLogin(response.data.access_token, response.data.user);
+      const token = response.data.access_token;
+      
+      // Store token first so the next request can use it
+      localStorage.setItem('token', token);
+      
+      // Fetch full user info with roles
+      const userResponse = await authAPI.getCurrentUser();
+      onLogin(token, userResponse.data);
     } catch (err) {
       console.error('Registration error:', err);
       const errorMessage = err.response?.data?.detail || 
