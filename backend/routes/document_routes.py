@@ -121,11 +121,10 @@ async def get_document(
 @router.post("/{document_id}/process")
 async def process_document_sync(
     document_id: int,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Process a document asynchronously with progress tracking"""
+    """Process a document synchronously"""
     from workers.tasks import process_document_sync as process_func
     
     # Get document and verify ownership
@@ -140,19 +139,17 @@ async def process_document_sync(
             detail="Document not found"
         )
     
-    # Update status to processing with 0% progress
+    # Update status to processing
     document.status = DocumentStatus.PROCESSING
-    document.processing_progress = 0
     db.commit()
     
-    # Process in background
-    background_tasks.add_task(process_func, document_id)
+    # Process synchronously (blocks but updates progress via logs)
+    result = process_func(document_id)
     
     return {
         "message": "Document processing started",
         "document_id": document_id,
-        "status": "processing",
-        "progress": 0
+        "status": "processing"
     }
 
 @router.get("/{document_id}/progress")
