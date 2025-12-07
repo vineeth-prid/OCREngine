@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 OCR Engine - API Connection Test</h1>
+    
+    <div class="status info">
+        <strong>Current URL:</strong> <span id="currentUrl"></span><br>
+        <strong>API Base URL:</strong> <span id="apiBaseUrl"></span>
+    </div>
+
+    <div>
+        <button onclick="testHealth()">Test Health</button>
+        <button onclick="testRegistration()">Test Registration</button>
+        <button onclick="testLogin()">Test Admin Login</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // Detect API base URL (same logic as in app)
+        function getApiBaseUrl() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'http://localhost:8001';
+            }
+            return window.location.origin;
+        }
+
+        const API_BASE_URL = getApiBaseUrl();
+        
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('apiBaseUrl').textContent = API_BASE_URL;
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'status ' + type;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function testHealth() {
+            addResult('Testing health endpoint...', 'info');
+            try {
+                const response = await fetch(API_BASE_URL + '/api/health');
+                const data = await response.json();
+                addResult('✅ Health Check Success!<pre>' + JSON.stringify(data, null, 2) + '</pre>', 'success');
+            } catch (error) {
+                addResult('❌ Health Check Failed: ' + error.message + '<br><pre>' + error.stack + '</pre>', 'error');
+            }
+        }
+
+        async function testRegistration() {
+            const timestamp = Date.now();
+            const testData = {
+                email: `test${timestamp}@example.com`,
+                password: 'TestPass123!',
+                full_name: 'Test User',
+                organization_name: `Test Org ${timestamp}`
+            };
+
+            addResult('Testing registration with email: ' + testData.email, 'info');
+            
+            try {
+                const response = await fetch(API_BASE_URL + '/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.access_token) {
+                    addResult('✅ Registration Success!<br>Email: ' + data.user.email + '<br>Token: ' + data.access_token.substring(0, 50) + '...', 'success');
+                } else {
+                    addResult('❌ Registration Failed: <pre>' + JSON.stringify(data, null, 2) + '</pre>', 'error');
+                }
+            } catch (error) {
+                addResult('❌ Registration Error: ' + error.message + '<br><pre>' + error.stack + '</pre>', 'error');
+            }
+        }
+
+        async function testLogin() {
+            const credentials = {
+                email: 'admin@ocrengine.com',
+                password: 'SecurePass123!'
+            };
+
+            addResult('Testing login with: ' + credentials.email, 'info');
+            
+            try {
+                const response = await fetch(API_BASE_URL + '/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(credentials)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.access_token) {
+                    addResult('✅ Login Success!<br>User: ' + data.user.email + '<br>Tenant: ' + data.user.tenant_name, 'success');
+                } else {
+                    addResult('❌ Login Failed: <pre>' + JSON.stringify(data, null, 2) + '</pre>', 'error');
+                }
+            } catch (error) {
+                addResult('❌ Login Error: ' + error.message + '<br><pre>' + error.stack + '</pre>', 'error');
+            }
+        }
+
+        // Auto-run health check on load
+        window.addEventListener('load', () => {
+            setTimeout(testHealth, 500);
+        });
+    </script>
+</body>
+</html>
