@@ -254,3 +254,114 @@ async def get_document_fields(
         })
     
     return result
+
+@router.put("/{document_id}/fields/{field_id}")
+async def update_field_value(
+    document_id: int,
+    field_id: int,
+    update_data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a field value for a document"""
+    # Get document and verify ownership
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found"
+        )
+    
+    # Get field value
+    field_value = db.query(FieldValue).filter(
+        FieldValue.document_id == document_id,
+        FieldValue.field_id == field_id
+    ).first()
+    
+    if not field_value:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Field value not found"
+        )
+    
+    # Update field value
+    if 'final_value' in update_data:
+        field_value.final_value = update_data['final_value']
+    if 'needs_review' in update_data:
+        field_value.needs_review = update_data['needs_review']
+    
+    db.commit()
+    db.refresh(field_value)
+    
+    return {
+        "message": "Field updated successfully",
+        "field_id": field_id,
+        "final_value": field_value.final_value
+    }
+
+@router.get("/export/schema/{schema_id}")
+async def get_documents_by_schema(
+    schema_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all documents and their field values for a specific schema"""
+    # Verify schema belongs to user's tenant
+    schema = db.query(FormSchema).filter(
+        FormSchema.id == schema_id,
+        FormSchema.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not schema:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schema not found"
+        )
+    
+    # Get all fields for this schema
+    fields = db.query(FormField).filter(FormField.schema_id == schema_id).order_by(FormField.id).all()
+    
+    # Get all documents for this schema
+    documents = db.query(Document).filter(
+        Document.form_schema_id == schema_id,
+        Document.tenant_id == current_user.tenant_id,
+        Document.status == DocumentStatus.COMPLETED
+    ).order_by(Document.created_at.desc()).all()
+    
+    # Build table data
+    columns = ['Document ID', 'Filename', 'Uploaded Date', 'Confidence'] + [f.field_label for f in fields]
+    
+    rows = []
+    for doc in documents:
+        row = {
+            'document_id': doc.id,
+            'filename': doc.original_filename,
+            'uploaded_date': doc.created_at.isoformat(),
+            'confidence': f"{doc.overall_confidence * 100:.1f}%" if doc.overall_confidence else "N/A"
+        }
+        
+        # Get field values for this document
+        for field in fields:
+            field_value = db.query(FieldValue).filter(
+                FieldValue.document_id == doc.id,
+                FieldValue.field_id == field.id
+            ).first()
+            
+            if field_value:
+                row[field.field_label] = field_value.final_value or field_value.normalized_value or field_value.extracted_value or ''
+            else:
+                row[field.field_label] = ''
+        
+        rows.append(row)
+    
+    return {
+        "schema_name": schema.name,
+        "schema_id": schema_id,
+        "columns": columns,
+        "rows": rows,
+        "total_documents": len(rows)
+    }
