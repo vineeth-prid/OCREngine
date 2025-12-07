@@ -5,6 +5,7 @@ import { documentAPI, schemaAPI } from '../services/api';
 function Documents({ user, onLogout }) {
   const [documents, setDocuments] = useState([]);
   const [schemas, setSchemas] = useState([]);
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -50,12 +51,21 @@ function Documents({ user, onLogout }) {
       setSelectedFile(null);
       setSelectedSchema('');
       loadData();
-      alert('Document uploaded and queued for processing!');
+      alert('Document uploaded and processing started!');
     } catch (error) {
       console.error('Error uploading document:', error);
       alert('Failed to upload document');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleViewDocument = async (doc) => {
+    try {
+      const response = await documentAPI.get(doc.id);
+      setSelectedDocument(response.data);
+    } catch (error) {
+      console.error('Error loading document details:', error);
     }
   };
 
@@ -66,6 +76,16 @@ function Documents({ user, onLogout }) {
       case 'failed': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getProcessingTime = (doc) => {
+    if (doc.processing_started_at && doc.processing_completed_at) {
+      const start = new Date(doc.processing_started_at);
+      const end = new Date(doc.processing_completed_at);
+      const seconds = Math.round((end - start) / 1000);
+      return seconds > 0 ? `${seconds}s` : 'N/A';
+    }
+    return 'N/A';
   };
 
   return (
@@ -91,19 +111,21 @@ function Documents({ user, onLogout }) {
                 onChange={handleFileChange}
                 accept=".pdf,.jpg,.jpeg,.png"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                data-testid="file-input"
               />
               <p className="mt-1 text-sm text-gray-500">Accepted: PDF, JPG, PNG</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Form Schema (Optional)
+                Form Template (Optional)
               </label>
               <select
                 value={selectedSchema}
                 onChange={(e) => setSelectedSchema(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                data-testid="schema-select"
               >
-                <option value="">No schema (OCR only)</option>
+                <option value="">No template (Extract text only)</option>
                 {schemas.map((schema) => (
                   <option key={schema.id} value={schema.id}>
                     {schema.name}
@@ -115,6 +137,7 @@ function Documents({ user, onLogout }) {
               type="submit"
               disabled={!selectedFile || uploading}
               className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="upload-btn"
             >
               {uploading ? 'Uploading...' : 'Upload & Process'}
             </button>
@@ -145,7 +168,13 @@ function Documents({ user, onLogout }) {
                     Confidence
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Processing Time
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Uploaded
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -161,15 +190,102 @@ function Documents({ user, onLogout }) {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {(doc.overall_confidence * 100).toFixed(1)}%
+                      {doc.overall_confidence ? (doc.overall_confidence * 100).toFixed(1) + '%' : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getProcessingTime(doc)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(doc.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleViewDocument(doc)}
+                        className="text-primary-600 hover:text-primary-900 font-medium"
+                        data-testid={`view-doc-${doc.id}`}
+                      >
+                        View Details
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Document Detail Modal */}
+        {selectedDocument && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedDocument(null)}>
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{selectedDocument.original_filename}</h2>
+                    <p className="text-sm text-gray-500 mt-1">Document ID: {selectedDocument.id}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedDocument(null)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Document Info */}
+                <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-gray-600">Status</p>
+                    <p className="text-lg font-semibold text-gray-900">{selectedDocument.status}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Confidence</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {selectedDocument.overall_confidence ? (selectedDocument.overall_confidence * 100).toFixed(1) + '%' : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Processing Time</p>
+                    <p className="text-lg font-semibold text-gray-900">{getProcessingTime(selectedDocument)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Pages</p>
+                    <p className="text-lg font-semibold text-gray-900">{selectedDocument.num_pages}</p>
+                  </div>
+                </div>
+
+                {/* Extracted Data - will be populated by backend */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Extracted Data</h3>
+                  {selectedDocument.form_schema_id ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600 mb-3">Form-based extraction is being processed...</p>
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-900">
+                          Data has been extracted according to your form template. Field values will be displayed here once the backend API is updated.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-2">Raw Text Extraction:</p>
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                        OCR text extraction completed. Full text will be available once the extraction results API is implemented.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setSelectedDocument(null)}
+                  className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
