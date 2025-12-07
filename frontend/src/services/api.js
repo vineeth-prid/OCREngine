@@ -1,10 +1,24 @@
 import axios from 'axios';
 
-// Use relative path if REACT_APP_BACKEND_URL is not set, or use window location
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 
-                     (window.location.hostname === 'localhost' 
-                       ? 'http://localhost:8001' 
-                       : `${window.location.protocol}//${window.location.hostname}:8001`);
+// Detect if running in preview/production or local environment
+const getApiBaseUrl = () => {
+  // If explicit env var is set, use it
+  if (process.env.REACT_APP_BACKEND_URL) {
+    return process.env.REACT_APP_BACKEND_URL;
+  }
+  
+  // If running on localhost, use port 8001
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:8001';
+  }
+  
+  // For preview/production environments, use same origin (backend is on /api route)
+  return window.location.origin;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
