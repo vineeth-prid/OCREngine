@@ -213,3 +213,44 @@ async def get_document_logs(
     ).order_by(ProcessingLog.created_at.desc()).all()
     
     return logs
+
+@router.get("/{document_id}/fields")
+async def get_document_fields(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found"
+        )
+    
+    # Get field values with field details
+    from models import FieldValue, FormField
+    field_values = db.query(FieldValue, FormField).join(
+        FormField, FieldValue.field_id == FormField.id
+    ).filter(
+        FieldValue.document_id == document_id
+    ).all()
+    
+    result = []
+    for field_value, form_field in field_values:
+        result.append({
+            "field_id": form_field.id,
+            "field_name": form_field.field_name,
+            "field_label": form_field.field_label,
+            "field_type": form_field.field_type.value,
+            "extracted_value": field_value.extracted_value,
+            "normalized_value": field_value.normalized_value,
+            "final_value": field_value.final_value,
+            "confidence_score": field_value.confidence_score,
+            "needs_review": field_value.needs_review
+        })
+    
+    return result
