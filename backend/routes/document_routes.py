@@ -124,10 +124,8 @@ async def process_document_sync(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Process a document synchronously"""
-    import sys
-    sys.path.insert(0, '/app')
-    from workers.tasks import process_document_sync as process_func
+    """Process a document synchronously (runs in a thread to not block)"""
+    import threading
     
     # Get document and verify ownership
     document = db.query(Document).filter(
@@ -145,8 +143,16 @@ async def process_document_sync(
     document.status = DocumentStatus.PROCESSING
     db.commit()
     
-    # Process synchronously (blocks but updates progress via logs)
-    result = process_func(document_id)
+    # Process in background thread
+    def process_in_thread():
+        import sys
+        sys.path.insert(0, '/app')
+        from workers.tasks import process_document_sync as process_func
+        process_func(document_id)
+    
+    thread = threading.Thread(target=process_in_thread)
+    thread.daemon = True
+    thread.start()
     
     return {
         "message": "Document processing started",
