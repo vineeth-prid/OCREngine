@@ -80,6 +80,9 @@ function App() {
           <Route path="/documents" element={
             isAuthenticated ? <Documents user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
           } />
+          <Route path="/export" element={
+            isAuthenticated ? <DataExport user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
+          } />
           <Route path="/admin" element={
             isAuthenticated && Array.isArray(userRoles) && userRoles.includes('admin') ? 
             <AdminPanel user={user} userRoles={userRoles} onLogout={handleLogout} /> : 
