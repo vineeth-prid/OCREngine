@@ -19,7 +19,39 @@ function Documents({ user, onLogout }) {
 
   useEffect(() => {
     loadData();
+    
+    // Poll for processing documents every 2 seconds
+    const interval = setInterval(() => {
+      checkProcessingProgress();
+    }, 2000);
+    
+    return () => clearInterval(interval);
   }, []);
+
+  const checkProcessingProgress = async () => {
+    const processingDocIds = documents
+      .filter(doc => doc.status === 'processing')
+      .map(doc => doc.id);
+    
+    if (processingDocIds.length === 0) return;
+    
+    for (const docId of processingDocIds) {
+      try {
+        const response = await documentAPI.getProgress(docId);
+        setProcessingDocs(prev => ({
+          ...prev,
+          [docId]: response.data
+        }));
+        
+        // Reload data if completed
+        if (response.data.status !== 'processing') {
+          loadData();
+        }
+      } catch (error) {
+        console.error(`Error checking progress for doc ${docId}:`, error);
+      }
+    }
+  };
 
   const loadData = async () => {
     try {
