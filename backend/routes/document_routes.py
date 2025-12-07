@@ -365,3 +365,38 @@ async def get_documents_by_schema(
         "rows": rows,
         "total_documents": len(rows)
     }
+
+@router.get("/export/schema/{schema_id}/csv")
+async def export_schema_csv(
+    schema_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Export documents data as CSV"""
+    from fastapi.responses import StreamingResponse
+    import io
+    import csv
+    
+    # Get data
+    data = await get_documents_by_schema(schema_id, current_user, db)
+    
+    # Create CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(data['columns'])
+    
+    # Write rows
+    for row in data['rows']:
+        writer.writerow([row.get(col, '') for col in data['columns']])
+    
+    # Return as downloadable file
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={data['schema_name']}_export.csv"
+        }
+    )
