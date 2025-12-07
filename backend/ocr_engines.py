@@ -15,16 +15,18 @@ class OCREngine:
     def convert_pdf_to_image(self, pdf_path: str) -> str:
         """Convert PDF first page to image"""
         try:
-            images = convert_from_path(pdf_path, first_page=1, last_page=1)
+            # Convert with higher DPI for better OCR quality
+            images = convert_from_path(pdf_path, first_page=1, last_page=1, dpi=300)
             if images:
                 # Save as temporary image
                 image_path = pdf_path.replace('.pdf', '_page1.jpg')
-                images[0].save(image_path, 'JPEG')
+                images[0].save(image_path, 'JPEG', quality=95)
                 return image_path
-            return pdf_path
+            else:
+                raise Exception("No images extracted from PDF")
         except Exception as e:
             print(f"PDF conversion error: {e}")
-            return pdf_path
+            raise Exception(f"Failed to convert PDF to image: {str(e)}")
     
     def preprocess_image(self, image_path: str) -> np.ndarray:
         """Preprocess image for better OCR results"""
