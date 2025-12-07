@@ -112,4 +112,12 @@ export const adminAPI = {
   updateConfig: (key, data) => api.put(`/api/admin/config/${key}`, data),
 };
 
+export const llmAPI = {
+  getStatus: () => api.get('/api/llm/status'),
+  getConfig: () => api.get('/api/llm/config'),
+  updateConfig: (data) => api.post('/api/llm/config', data),
+  downloadModel: (modelName) => api.post('/api/llm/download-model', null, { params: { model_name: modelName } }),
+  testConnection: (modelType) => api.post('/api/llm/test-connection', null, { params: { model_type: modelType } }),
+};
+
 export default api;
