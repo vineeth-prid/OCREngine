@@ -147,6 +147,7 @@ def process_document_sync(
         document.status = DocumentStatus.PROCESSING
         document.processing_started_at = datetime.now(timezone.utc)
         db.commit()
+        db.refresh(document)
         
         # Add processing log
         log = ProcessingLog(
