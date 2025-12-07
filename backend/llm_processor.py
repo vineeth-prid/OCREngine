@@ -7,21 +7,16 @@ import os
 import json
 import time
 import requests
+import asyncio
 from typing import Dict, List, Optional
-from openai import OpenAI
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 class LLMProcessor:
     def __init__(self):
-        self.openai_api_key = os.getenv('OPENAI_API_KEY') or os.getenv('EMERGENT_LLM_KEY')
+        self.emergent_llm_key = os.getenv('OPENAI_API_KEY') or os.getenv('EMERGENT_LLM_KEY')
         self.ollama_base_url = "http://localhost:11434"
         self.use_local = False  # Default to cloud
         self.local_model = "qwen2.5:3b-instruct"
-        
-        # Initialize OpenAI client
-        if self.openai_api_key:
-            self.openai_client = OpenAI(api_key=self.openai_api_key)
-        else:
-            self.openai_client = None
     
     def check_local_model_available(self) -> bool:
         """Check if local Ollama model is available and has enough memory"""
