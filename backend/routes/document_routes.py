@@ -338,10 +338,10 @@ async def get_documents_by_schema(
     rows = []
     for doc in documents:
         row = {
-            'document_id': doc.id,
-            'filename': doc.original_filename,
-            'uploaded_date': doc.created_at.isoformat(),
-            'confidence': f"{doc.overall_confidence * 100:.1f}%" if doc.overall_confidence else "N/A"
+            'Document ID': doc.id,
+            'Filename': doc.original_filename,
+            'Uploaded Date': doc.created_at.strftime('%Y-%m-%d %H:%M'),
+            'Confidence': f"{doc.overall_confidence * 100:.1f}%" if doc.overall_confidence else "N/A"
         }
         
         # Get field values for this document
