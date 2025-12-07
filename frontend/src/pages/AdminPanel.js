@@ -129,25 +129,138 @@ function AdminPanel({ user, onLogout }) {
             )}
 
             {activeTab === 'config' && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">System Configuration</h2>
-                {configs.length === 0 ? (
-                  <p className="text-gray-500">No configurations set</p>
-                ) : (
+              <div className="space-y-6">
+                {/* OCR Engine Configuration */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">OCR Engine Configuration</h2>
                   <div className="space-y-4">
-                    {configs.map((config) => (
-                      <div key={config.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium text-gray-900">{config.config_key}</h3>
-                            <p className="text-sm text-gray-500 mt-1">{config.description}</p>
-                          </div>
-                          {config.is_secret && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Secret</span>
-                          )}
-                        </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Tesseract OCR</h3>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
                       </div>
-                    ))}
+                      <p className="text-sm text-gray-500">Traditional OCR engine for high-quality images</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">RapidOCR</h3>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Fast ONNX-based OCR for quick processing</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">PaddleOCR</h3>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Mock Mode</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Deep learning OCR (currently mocked to save resources)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* LLM Configuration */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">LLM Configuration</h2>
+                  <div className="space-y-4">
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">DeepSeek</h3>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Mock Mode</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Configure API key for DeepSeek LLM</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Qwen</h3>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Mock Mode</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Configure API key for Qwen LLM</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Mistral</h3>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Mock Mode</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Configure API key for Mistral LLM</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Qwen-VL</h3>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Mock Mode</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Configure API key for Qwen Vision LLM</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cloud OCR Configuration */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Cloud OCR Configuration</h2>
+                  <div className="space-y-4">
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Google Cloud Vision API</h3>
+                        <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Not Configured</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Configure API key for Google Vision (Professional tier)</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">AWS Textract</h3>
+                        <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Not Configured</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Configure AWS credentials for Textract (Professional tier)</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Azure Document Intelligence</h3>
+                        <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Not Configured</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Configure Azure credentials (Professional tier)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Gateway */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment Gateway - Razorpay</h2>
+                  <div className="space-y-4">
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Test Mode</h3>
+                        <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Not Configured</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Test Key ID & Secret not configured</p>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Live Mode</h3>
+                        <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Not Configured</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Live Key ID & Secret not configured</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Existing Configs */}
+                {configs.length > 0 && (
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Custom Configurations</h2>
+                    <div className="space-y-4">
+                      {configs.map((config) => (
+                        <div key={config.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-medium text-gray-900">{config.config_key}</h3>
+                              <p className="text-sm text-gray-500 mt-1">{config.description}</p>
+                            </div>
+                            {config.is_secret && (
+                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Secret</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
