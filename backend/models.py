@@ -71,7 +71,7 @@ class Role(Base):
     __tablename__ = "roles"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(SQLEnum(UserRole), nullable=False)
+    name = Column(SQLEnum(RoleEnum), nullable=False)
     description = Column(Text)
     permissions = Column(JSON)  # Store permissions as JSON
     created_at = Column(DateTime, default=datetime.utcnow)
