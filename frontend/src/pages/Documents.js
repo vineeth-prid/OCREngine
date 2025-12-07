@@ -15,6 +15,7 @@ function Documents({ user, onLogout }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedFields, setEditedFields] = useState({});
   const [saving, setSaving] = useState(false);
+  const [processingDocs, setProcessingDocs] = useState({});
 
   useEffect(() => {
     loadData();
