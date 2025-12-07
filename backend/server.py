@@ -77,6 +77,7 @@ app.include_router(role_routes.router)
 app.include_router(schema_routes.router)
 app.include_router(document_routes.router)
 app.include_router(admin_routes.router)
+app.include_router(llm_routes.router)
 
 if __name__ == "__main__":
     import uvicorn
