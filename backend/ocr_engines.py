@@ -5,6 +5,8 @@ import cv2
 import numpy as np
 from typing import Dict, Tuple, List
 import time
+import os
+from pdf2image import convert_from_path
 
 class OCREngine:
     def __init__(self):
