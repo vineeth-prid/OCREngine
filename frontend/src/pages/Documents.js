@@ -12,6 +12,9 @@ function Documents({ user, onLogout }) {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedSchema, setSelectedSchema] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedFields, setEditedFields] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadData();
