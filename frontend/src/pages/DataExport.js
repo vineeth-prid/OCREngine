@@ -170,11 +170,14 @@ function DataExport({ user, onLogout }) {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {tableData.rows.map((row, rowIdx) => (
                       <tr key={rowIdx} className="hover:bg-gray-50">
-                        {tableData.columns.map((col, colIdx) => (
-                          <td key={colIdx} className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                            {row[col] || '-'}
-                          </td>
-                        ))}
+                        {tableData.columns.map((col, colIdx) => {
+                          const value = row[col];
+                          return (
+                            <td key={colIdx} className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                              {value !== null && value !== undefined && value !== '' ? value : '-'}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
