@@ -76,14 +76,16 @@ function App() {
           <Route path="/dashboard" element={
             isAuthenticated ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
           } />
-          <Route path="/schemas" element={
-            isAuthenticated ? <Schemas user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
+          <Route path="/forms" element={
+            isAuthenticated ? <FormBuilder user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
           } />
           <Route path="/documents" element={
             isAuthenticated ? <Documents user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
           } />
           <Route path="/admin" element={
-            isAuthenticated ? <AdminPanel user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
+            isAuthenticated && userRoles.some(r => r.name === 'admin') ? 
+            <AdminPanel user={user} onLogout={handleLogout} /> : 
+            <Navigate to="/dashboard" />
           } />
           <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
         </Routes>
