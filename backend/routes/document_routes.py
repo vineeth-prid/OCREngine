@@ -332,17 +332,12 @@ async def get_documents_by_schema(
         Document.status == DocumentStatus.COMPLETED
     ).order_by(Document.created_at.desc()).all()
     
-    # Build table data
-    columns = ['Document ID', 'Filename', 'Uploaded Date', 'Confidence'] + [f.field_label for f in fields]
+    # Build table data - only template fields
+    columns = [f.field_label for f in fields]
     
     rows = []
     for doc in documents:
-        row = {
-            'Document ID': doc.id,
-            'Filename': doc.original_filename,
-            'Uploaded Date': doc.created_at.strftime('%Y-%m-%d %H:%M'),
-            'Confidence': f"{doc.overall_confidence * 100:.1f}%" if doc.overall_confidence else "N/A"
-        }
+        row = {}
         
         # Get field values for this document
         for field in fields:
