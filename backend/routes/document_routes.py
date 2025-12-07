@@ -125,6 +125,8 @@ async def process_document_sync(
     db: Session = Depends(get_db)
 ):
     """Process a document synchronously"""
+    import sys
+    sys.path.insert(0, '/app')
     from workers.tasks import process_document_sync as process_func
     
     # Get document and verify ownership
