@@ -137,6 +137,27 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
         }
     }
 
-@router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: User = Depends(get_current_user)):
-    return current_user
+@router.get("/me")
+async def get_current_user_info(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Get user roles
+    user_roles = db.query(UserRoleModel).filter(UserRoleModel.user_id == current_user.id).all()
+    roles = []
+    for user_role in user_roles:
+        role = db.query(Role).filter(Role.id == user_role.role_id).first()
+        if role:
+            roles.append(role.name.value)
+    
+    # Get tenant info
+    tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
+    
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "is_active": current_user.is_active,
+        "is_verified": current_user.is_verified,
+        "tenant_id": current_user.tenant_id,
+        "tenant_name": tenant.name if tenant else None,
+        "roles": roles,
+        "created_at": current_user.created_at
+    }
