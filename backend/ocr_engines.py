@@ -31,15 +31,26 @@ class OCREngine:
     
     def assess_quality(self, image_path: str) -> float:
         """Assess image quality (0-1 score)"""
-        img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        
-        # Calculate variance of Laplacian (blur detection)
-        laplacian_var = cv2.Laplacian(img, cv2.CV_64F).var()
-        
-        # Normalize to 0-1 scale (higher is better)
-        quality_score = min(laplacian_var / 1000, 1.0)
-        
-        return quality_score
+        try:
+            # Convert PDF to image if needed
+            if image_path.lower().endswith('.pdf'):
+                return 0.75  # Default quality for PDFs
+            
+            img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+            
+            if img is None or img.size == 0:
+                return 0.5  # Default medium quality if can't read
+            
+            # Calculate variance of Laplacian (blur detection)
+            laplacian_var = cv2.Laplacian(img, cv2.CV_64F).var()
+            
+            # Normalize to 0-1 scale (higher is better)
+            quality_score = min(laplacian_var / 1000, 1.0)
+            
+            return quality_score
+        except Exception as e:
+            print(f"Quality assessment error: {e}")
+            return 0.5  # Default medium quality on error
     
     def run_tesseract(self, image_path: str) -> Dict:
         """Run Tesseract OCR"""
