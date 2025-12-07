@@ -304,35 +304,85 @@ function Documents({ user, onLogout }) {
 
                 {/* Extracted Data */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Extracted Data</h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Extracted Data</h3>
+                    {extractedFields.length > 0 && selectedDocument.status === 'completed' && (
+                      <div className="flex gap-2">
+                        {!isEditing ? (
+                          <button
+                            onClick={() => setIsEditing(true)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                          >
+                            ✏️ Edit Fields
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setIsEditing(false);
+                                setEditedFields({});
+                              }}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                              disabled={saving}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleSaveFields}
+                              disabled={saving}
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-50"
+                            >
+                              {saving ? 'Saving...' : '💾 Save Changes'}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {extractedFields.length > 0 ? (
                     <div className="space-y-3">
-                      {extractedFields.map((field) => (
-                        <div key={field.field_id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-700">{field.field_label}</p>
-                              <p className="text-lg text-gray-900 mt-1">
-                                {field.final_value || field.normalized_value || field.extracted_value || 'N/A'}
-                              </p>
-                            </div>
-                            <div className="text-right ml-4">
-                              <p className="text-xs text-gray-500">Confidence</p>
-                              <p className={`text-sm font-semibold ${
-                                field.confidence_score >= 0.8 ? 'text-green-600' :
-                                field.confidence_score >= 0.5 ? 'text-yellow-600' : 'text-red-600'
-                              }`}>
-                                {(field.confidence_score * 100).toFixed(1)}%
-                              </p>
-                              {field.needs_review && (
-                                <span className="inline-block mt-1 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
-                                  Needs Review
-                                </span>
-                              )}
+                      {extractedFields.map((field) => {
+                        const currentValue = editedFields[field.field_id] !== undefined 
+                          ? editedFields[field.field_id]
+                          : (field.final_value || field.normalized_value || field.extracted_value || '');
+                        
+                        return (
+                          <div key={field.field_id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-700 mb-2">{field.field_label}</p>
+                                {isEditing ? (
+                                  <input
+                                    type="text"
+                                    value={currentValue}
+                                    onChange={(e) => handleEditField(field.field_id, e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    placeholder="Enter value..."
+                                  />
+                                ) : (
+                                  <p className="text-lg text-gray-900 mt-1">
+                                    {currentValue || 'N/A'}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right ml-4">
+                                <p className="text-xs text-gray-500">Confidence</p>
+                                <p className={`text-sm font-semibold ${
+                                  field.confidence_score >= 0.8 ? 'text-green-600' :
+                                  field.confidence_score >= 0.5 ? 'text-yellow-600' : 'text-red-600'
+                                }`}>
+                                  {(field.confidence_score * 100).toFixed(1)}%
+                                </p>
+                                {field.needs_review && !isEditing && (
+                                  <span className="inline-block mt-1 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                                    Needs Review
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="p-4 bg-gray-50 rounded-lg">
