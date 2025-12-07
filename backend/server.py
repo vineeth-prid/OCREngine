@@ -11,7 +11,7 @@ load_dotenv()
 from database import engine, Base
 
 # Import routes
-from routes import auth_routes, user_routes, tenant_routes, role_routes, schema_routes, document_routes, admin_routes
+from routes import auth_routes, user_routes, tenant_routes, role_routes, schema_routes, document_routes, admin_routes, llm_routes
 
 # Create tables on startup
 @asynccontextmanager
