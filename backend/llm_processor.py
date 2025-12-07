@@ -29,18 +29,18 @@ class LLMProcessor:
             pass
         return False
     
-    def process_with_cloud_llm(
+    async def process_with_cloud_llm_async(
         self, 
         model: str,
         ocr_text: str, 
         schema_fields: List[Dict],
         use_mini: bool = False
     ) -> Dict:
-        """Process document with cloud LLM (OpenAI)"""
+        """Process document with cloud LLM using emergentintegrations"""
         start_time = time.time()
         
-        if not self.openai_client:
-            raise Exception("OpenAI API key not configured")
+        if not self.emergent_llm_key:
+            raise Exception("Emergent LLM key not configured")
         
         # Build prompt
         field_descriptions = "\n".join([
@@ -67,23 +67,29 @@ If a field is not found, use null for value and 0.0 for confidence.
         
         try:
             # Use mini model for simple docs, full model for complex
-            model_to_use = "gpt-4o-mini" if use_mini else "gpt-4o"
+            model_to_use = "gpt-4.1-mini" if use_mini else "gpt-4.1"
             
-            response = self.openai_client.chat.completions.create(
-                model=model_to_use,
-                messages=[
-                    {"role": "system", "content": "You are a document extraction expert. Extract fields accurately and return only valid JSON."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=1000,
-                response_format={"type": "json_object"}
-            )
+            # Create chat instance
+            chat = LlmChat(
+                api_key=self.emergent_llm_key,
+                session_id=f"doc_extraction_{int(time.time())}",
+                system_message="You are a document extraction expert. Extract fields accurately and return only valid JSON."
+            ).with_model("openai", model_to_use)
+            
+            # Send message
+            user_message = UserMessage(text=prompt)
+            response_text = await chat.send_message(user_message)
             
             processing_time = time.time() - start_time
             
-            # Parse response
-            extracted_data = json.loads(response.choices[0].message.content)
+            # Parse response - extract JSON from response
+            response_text = response_text.strip()
+            if '```json' in response_text:
+                response_text = response_text.split('```json')[1].split('```')[0].strip()
+            elif '```' in response_text:
+                response_text = response_text.split('```')[1].split('```')[0].strip()
+            
+            extracted_data = json.loads(response_text)
             
             # Calculate overall confidence
             confidence_scores = [
@@ -97,12 +103,32 @@ If a field is not found, use null for value and 0.0 for confidence.
                 'extracted_fields': extracted_data,
                 'overall_confidence': overall_confidence,
                 'processing_time': processing_time,
-                'tokens_used': response.usage.total_tokens if hasattr(response, 'usage') else 0
+                'tokens_used': 0  # emergentintegrations doesn't expose token count
             }
             
         except Exception as e:
             print(f"Cloud LLM error: {e}")
+            import traceback
+            traceback.print_exc()
             return self._generate_mock_response(schema_fields, processing_time=time.time() - start_time)
+    
+    def process_with_cloud_llm(
+        self, 
+        model: str,
+        ocr_text: str, 
+        schema_fields: List[Dict],
+        use_mini: bool = False
+    ) -> Dict:
+        """Synchronous wrapper for cloud LLM processing"""
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        return loop.run_until_complete(
+            self.process_with_cloud_llm_async(model, ocr_text, schema_fields, use_mini)
+        )
     
     def process_with_local_llm(
         self, 
