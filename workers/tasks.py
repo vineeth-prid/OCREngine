@@ -7,7 +7,7 @@ from database import SessionLocal
 from models import Document, DocumentPage, OCRResult, LLMResult, FieldValue, ProcessingLog, FormField, DocumentStatus
 from ocr_engines import OCREngine
 from llm_processor import LLMProcessor
-from datetime import datetime
+from datetime import datetime, timezone
 
 ocr_engine = OCREngine()
 llm_processor = LLMProcessor()
