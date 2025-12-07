@@ -18,13 +18,10 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      Promise.all([
-        authAPI.getCurrentUser(),
-        userAPI.getRoles(JSON.parse(localStorage.getItem('user') || '{}').id || 1)
-      ])
-        .then(([userResponse, rolesResponse]) => {
+      authAPI.getCurrentUser()
+        .then((userResponse) => {
           setUser(userResponse.data);
-          setUserRoles(rolesResponse.data || []);
+          setUserRoles(userResponse.data.roles || []);
           setIsAuthenticated(true);
         })
         .catch((err) => {
