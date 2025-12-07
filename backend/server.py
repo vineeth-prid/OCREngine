@@ -11,7 +11,7 @@ load_dotenv()
 from database import engine, Base
 
 # Import routes
-from routes import auth_routes, user_routes, tenant_routes, role_routes, schema_routes
+from routes import auth_routes, user_routes, tenant_routes, role_routes, schema_routes, document_routes, admin_routes
 
 # Create tables on startup
 @asynccontextmanager
@@ -75,6 +75,8 @@ app.include_router(user_routes.router)
 app.include_router(tenant_routes.router)
 app.include_router(role_routes.router)
 app.include_router(schema_routes.router)
+app.include_router(document_routes.router)
+app.include_router(admin_routes.router)
 
 if __name__ == "__main__":
     import uvicorn
