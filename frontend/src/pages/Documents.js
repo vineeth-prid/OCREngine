@@ -75,9 +75,43 @@ function Documents({ user, onLogout }) {
       setSelectedDocument(detailRes.data);
       setExtractedFields(fieldsRes.data || []);
       setProcessingLogs(logsRes.data || []);
+      setIsEditing(false);
+      setEditedFields({});
     } catch (error) {
       console.error('Error loading document details:', error);
       alert('Failed to load document details');
+    }
+  };
+
+  const handleEditField = (fieldId, value) => {
+    setEditedFields(prev => ({
+      ...prev,
+      [fieldId]: value
+    }));
+  };
+
+  const handleSaveFields = async () => {
+    if (!selectedDocument) return;
+    
+    setSaving(true);
+    try {
+      // Update each edited field
+      for (const [fieldId, value] of Object.entries(editedFields)) {
+        await documentAPI.updateField(selectedDocument.id, fieldId, { final_value: value, needs_review: false });
+      }
+      
+      // Reload document data
+      const fieldsRes = await documentAPI.getFields(selectedDocument.id);
+      setExtractedFields(fieldsRes.data || []);
+      setIsEditing(false);
+      setEditedFields({});
+      alert('✅ Fields updated successfully!');
+      loadData(); // Refresh document list
+    } catch (error) {
+      console.error('Error saving fields:', error);
+      alert('Failed to save fields: ' + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
