@@ -16,16 +16,34 @@ function AdminPanel({ user, onLogout }) {
 
   const loadData = async () => {
     try {
-      const [statsRes, configsRes] = await Promise.all([
+      const [statsRes, configsRes, llmStatusRes] = await Promise.all([
         adminAPI.getStats(),
         adminAPI.listConfigs(),
+        llmAPI.getStatus(),
       ]);
       setStats(statsRes.data);
       setConfigs(configsRes.data);
+      setLlmStatus(llmStatusRes.data);
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestConnection = async (modelType) => {
+    setTestingConnection(true);
+    try {
+      const response = await llmAPI.testConnection(modelType);
+      if (response.data.success) {
+        alert('✅ Connection successful!\n\n' + response.data.message);
+      } else {
+        alert('❌ Connection failed:\n\n' + response.data.message);
+      }
+    } catch (error) {
+      alert('❌ Connection test failed:\n\n' + error.message);
+    } finally {
+      setTestingConnection(false);
     }
   };
 
