@@ -271,9 +271,25 @@ function Documents({ user, onLogout }) {
                       {doc.original_filename}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>
-                        {doc.status}
-                      </span>
+                      {doc.status === 'processing' && processingDocs[doc.id] ? (
+                        <div className="w-full">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-semibold text-blue-600">Processing</span>
+                            <span className="text-xs text-gray-600">{processingDocs[doc.id].progress}%</span>
+                          </div>
+                          <div className="w-32 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${processingDocs[doc.id].progress}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">{processingDocs[doc.id].stage}</div>
+                        </div>
+                      ) : (
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(doc.status)}`}>
+                          {doc.status}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {doc.overall_confidence ? (doc.overall_confidence * 100).toFixed(1) + '%' : 'N/A'}
@@ -289,6 +305,7 @@ function Documents({ user, onLogout }) {
                         onClick={() => handleViewDocument(doc)}
                         className="text-primary-600 hover:text-primary-900 font-medium"
                         data-testid={`view-doc-${doc.id}`}
+                        disabled={doc.status === 'processing'}
                       >
                         View Details
                       </button>
