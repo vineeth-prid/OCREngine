@@ -140,20 +140,27 @@ async def process_document(
     document.processing_started_at = datetime.utcnow()
     db.commit()
     
-    # Queue for async processing with Celery
+    # Process synchronously (more reliable than Celery in container environments)
     try:
-        from workers.tasks import process_document as process_task
-        process_task.delay(document_id)
-    except Exception as e:
-        print(f"Error queuing task: {e}")
-        # Fall back to synchronous processing
         import sys
         sys.path.append('/app/workers')
+        sys.path.append('/app/backend')
         from tasks import process_document as sync_process
-        sync_process(document_id)
+        
+        # Process in background thread to not block API
+        import threading
+        thread = threading.Thread(target=sync_process, args=(document_id,))
+        thread.daemon = True
+        thread.start()
+        
+    except Exception as e:
+        print(f"Error starting processing: {e}")
+        document.status = DocumentStatus.FAILED
+        document.error_message = str(e)
+        db.commit()
     
     return {
-        "message": "Document queued for processing",
+        "message": "Document processing started",
         "document_id": document_id,
         "status": "processing"
     }
