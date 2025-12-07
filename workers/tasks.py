@@ -6,7 +6,7 @@ sys.path.append('/app/backend')
 from database import SessionLocal
 from models import Document, DocumentPage, OCRResult, LLMResult, FieldValue, ProcessingLog, FormField, DocumentStatus
 from ocr_engines import OCREngine
-from llm_mock import LLMProcessor
+from llm_processor import LLMProcessor
 from datetime import datetime
 
 ocr_engine = OCREngine()
