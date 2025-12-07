@@ -175,7 +175,7 @@ def process_document(document_id: int):
         
         # Step 3: Finalize
         document.status = DocumentStatus.COMPLETED
-        document.processing_completed_at = datetime.utcnow()
+        document.processing_completed_at = datetime.now(timezone.utc)
         db.commit()
         
         log = ProcessingLog(
