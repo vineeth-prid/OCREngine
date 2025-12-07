@@ -72,12 +72,24 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     
-    # Assign Admin role to first user of tenant
-    admin_role = db.query(Role).filter(Role.name == RoleEnum.ADMIN).first()
-    if admin_role:
-        user_role = UserRoleModel(user_id=user.id, role_id=admin_role.id)
-        db.add(user_role)
-        db.commit()
+    # Assign role to user (Admin for first user, Viewer for others)
+    # Check if this is the first user of the tenant
+    user_count = db.query(User).filter(User.tenant_id == tenant.id).count()
+    
+    if user_count == 1:
+        # First user gets Admin role
+        admin_role = db.query(Role).filter(Role.name == RoleEnum.ADMIN).first()
+        if admin_role:
+            user_role = UserRoleModel(user_id=user.id, role_id=admin_role.id)
+            db.add(user_role)
+            db.commit()
+    else:
+        # Subsequent users get Viewer role
+        viewer_role = db.query(Role).filter(Role.name == RoleEnum.VIEWER).first()
+        if viewer_role:
+            user_role = UserRoleModel(user_id=user.id, role_id=viewer_role.id)
+            db.add(user_role)
+            db.commit()
     
     # Generate token
     access_token = create_access_token(
