@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import User, Document, DocumentPage, FormSchema, DocumentStatus, ProcessingLog
+from models import User, Document, DocumentPage, FormSchema, FormField, FieldValue, DocumentStatus, ProcessingLog
 from schemas import DocumentUploadResponse, DocumentResponse
 from auth import get_current_user
 import os
