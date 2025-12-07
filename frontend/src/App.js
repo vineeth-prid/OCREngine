@@ -4,10 +4,10 @@ import './App.css';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Schemas from './pages/Schemas';
+import FormBuilder from './pages/FormBuilder';
 import Documents from './pages/Documents';
 import AdminPanel from './pages/AdminPanel';
-import { authAPI } from './services/api';
+import { authAPI, userAPI } from './services/api';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
