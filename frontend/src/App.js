@@ -80,8 +80,8 @@ function App() {
             isAuthenticated ? <Documents user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
           } />
           <Route path="/admin" element={
-            isAuthenticated && userRoles.some(r => r.name === 'admin') ? 
-            <AdminPanel user={user} onLogout={handleLogout} /> : 
+            isAuthenticated && userRoles.includes('admin') ? 
+            <AdminPanel user={user} userRoles={userRoles} onLogout={handleLogout} /> : 
             <Navigate to="/dashboard" />
           } />
           <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
