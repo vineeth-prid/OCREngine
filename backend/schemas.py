@@ -162,6 +162,8 @@ class DocumentResponse(BaseModel):
     num_pages: int
     status: DocumentStatus
     overall_confidence: float
+    processing_started_at: Optional[datetime]
+    processing_completed_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
     
