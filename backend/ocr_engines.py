@@ -12,6 +12,20 @@ class OCREngine:
     def __init__(self):
         self.rapid_ocr = RapidOCR()
     
+    def convert_pdf_to_image(self, pdf_path: str) -> str:
+        """Convert PDF first page to image"""
+        try:
+            images = convert_from_path(pdf_path, first_page=1, last_page=1)
+            if images:
+                # Save as temporary image
+                image_path = pdf_path.replace('.pdf', '_page1.jpg')
+                images[0].save(image_path, 'JPEG')
+                return image_path
+            return pdf_path
+        except Exception as e:
+            print(f"PDF conversion error: {e}")
+            return pdf_path
+    
     def preprocess_image(self, image_path: str) -> np.ndarray:
         """Preprocess image for better OCR results"""
         img = cv2.imread(image_path)
