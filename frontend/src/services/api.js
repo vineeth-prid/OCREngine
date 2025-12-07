@@ -87,6 +87,9 @@ export const documentAPI = {
   delete: (id) => api.delete(`/api/documents/${id}`),
   getLogs: (id) => api.get(`/api/documents/${id}/logs`),
   getFields: (id) => api.get(`/api/documents/${id}/fields`),
+  updateField: (docId, fieldId, data) => api.put(`/api/documents/${docId}/fields/${fieldId}`, data),
+  getDataBySchema: (schemaId) => api.get(`/api/documents/export/schema/${schemaId}`),
+  exportCSV: (schemaId) => api.get(`/api/documents/export/schema/${schemaId}/csv`, { responseType: 'blob' }),
 };
 
 export const userAPI = {
