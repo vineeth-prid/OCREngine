@@ -278,6 +278,7 @@ def process_document_sync(
         )
         db.add(log)
         db.commit()
+        db.refresh(document)
         
         return {
             "message": "Document processing completed",
