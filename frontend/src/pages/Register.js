@@ -35,7 +35,11 @@ function Register({ onLogin }) {
       const response = await authAPI.register(formData);
       onLogin(response.data.access_token, response.data.user);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      const errorMessage = err.response?.data?.detail || 
+                          err.message || 
+                          'Registration failed. Please check your connection and try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
