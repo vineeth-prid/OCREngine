@@ -140,8 +140,17 @@ async def process_document(
     document.processing_started_at = datetime.utcnow()
     db.commit()
     
-    # TODO: Queue for async processing with Celery
-    # For now, just mark as processing
+    # Queue for async processing with Celery
+    try:
+        from workers.tasks import process_document as process_task
+        process_task.delay(document_id)
+    except Exception as e:
+        print(f"Error queuing task: {e}")
+        # Fall back to synchronous processing
+        import sys
+        sys.path.append('/app/workers')
+        from tasks import process_document as sync_process
+        sync_process(document_id)
     
     return {
         "message": "Document queued for processing",
