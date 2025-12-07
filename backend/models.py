@@ -243,7 +243,7 @@ class ProcessingLog(Base):
     document_id = Column(Integer, ForeignKey("documents.id"), nullable=False)
     stage = Column(String(100), nullable=False)  # preprocessing, ocr, llm, validation
     message = Column(Text)
-    metadata = Column(JSON)  # Additional data
+    log_metadata = Column(JSON)  # Additional data
     level = Column(String(20), default="INFO")  # INFO, WARNING, ERROR
     created_at = Column(DateTime, default=datetime.utcnow)
     
