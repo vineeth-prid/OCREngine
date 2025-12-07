@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import FormBuilder from './pages/FormBuilder';
 import Documents from './pages/Documents';
+import DataExport from './pages/DataExport';
 import AdminPanel from './pages/AdminPanel';
 import { authAPI } from './services/api';
 
