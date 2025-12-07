@@ -27,7 +27,11 @@ function Login({ onLogin }) {
       const response = await authAPI.login(formData);
       onLogin(response.data.access_token, response.data.user);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Please try again.');
+      console.error('Login error:', err);
+      const errorMessage = err.response?.data?.detail || 
+                          err.message || 
+                          'Login failed. Please check your credentials and try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
