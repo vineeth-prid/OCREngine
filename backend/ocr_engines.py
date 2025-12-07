@@ -45,6 +45,9 @@ class OCREngine:
         """Run Tesseract OCR"""
         start_time = time.time()
         
+        # Set tesseract path
+        pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+        
         img = Image.open(image_path)
         
         # Get text with confidence
