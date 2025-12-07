@@ -17,15 +17,16 @@ function AdminPanel({ user, onLogout }) {
   const loadData = async () => {
     try {
       const [statsRes, configsRes, llmStatusRes] = await Promise.all([
-        adminAPI.getStats(),
-        adminAPI.listConfigs(),
-        llmAPI.getStatus(),
+        adminAPI.getStats().catch(e => ({ data: null })),
+        adminAPI.listConfigs().catch(e => ({ data: [] })),
+        llmAPI.getStatus().catch(e => ({ data: null })),
       ]);
       setStats(statsRes.data);
       setConfigs(configsRes.data);
       setLlmStatus(llmStatusRes.data);
     } catch (error) {
       console.error('Error loading admin data:', error);
+      alert('Failed to load admin data: ' + error.message);
     } finally {
       setLoading(false);
     }
