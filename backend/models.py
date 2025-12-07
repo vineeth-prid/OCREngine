@@ -5,7 +5,7 @@ from datetime import datetime
 import enum
 
 # Enums
-class UserRole(str, enum.Enum):
+class RoleEnum(str, enum.Enum):
     ADMIN = "admin"
     MANAGER = "manager"
     REVIEWER = "reviewer"
