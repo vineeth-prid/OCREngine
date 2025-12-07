@@ -98,11 +98,12 @@ def process_document(document_id: int):
                     for f in fields
                 ]
                 
-                # Process with LLM (mock)
+                # Process with LLM (cloud or local)
                 llm_result = llm_processor.process_with_model(
-                    'deepseek',
+                    'gpt-4o',  # Will auto-route to mini or full based on complexity
                     best_ocr['text'],
-                    field_dicts
+                    field_dicts,
+                    ocr_confidence=best_ocr['confidence']
                 )
                 
                 # Save LLM result
