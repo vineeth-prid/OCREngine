@@ -42,7 +42,7 @@ def process_document(document_id: int):
         
         # Update status
         document.status = DocumentStatus.PROCESSING
-        document.processing_started_at = datetime.utcnow()
+        document.processing_started_at = datetime.now(timezone.utc)
         db.commit()
         
         # Step 1: OCR Processing
