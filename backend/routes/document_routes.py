@@ -118,12 +118,17 @@ async def get_document(
     
     return document
 
-@router.post("/{document_id}/process", status_code=status.HTTP_202_ACCEPTED)
-async def process_document(
+@router.post("/{document_id}/process")
+async def process_document_sync(
     document_id: int,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Process a document asynchronously with progress tracking"""
+    from workers.tasks import process_document_sync as process_func
+    
+    # Get document and verify ownership
     document = db.query(Document).filter(
         Document.id == document_id,
         Document.tenant_id == current_user.tenant_id
@@ -135,34 +140,70 @@ async def process_document(
             detail="Document not found"
         )
     
-    # Update status
+    # Update status to processing with 0% progress
     document.status = DocumentStatus.PROCESSING
-    document.processing_started_at = datetime.utcnow()
+    document.processing_progress = 0
     db.commit()
     
-    # Process synchronously (more reliable than Celery in container environments)
-    try:
-        import sys
-        sys.path.append('/app/workers')
-        sys.path.append('/app/backend')
-        from tasks import process_document as sync_process
-        
-        # Process in background thread to not block API
-        import threading
-        thread = threading.Thread(target=sync_process, args=(document_id,))
-        thread.daemon = True
-        thread.start()
-        
-    except Exception as e:
-        print(f"Error starting processing: {e}")
-        document.status = DocumentStatus.FAILED
-        document.error_message = str(e)
-        db.commit()
+    # Process in background
+    background_tasks.add_task(process_func, document_id)
     
     return {
         "message": "Document processing started",
         "document_id": document_id,
-        "status": "processing"
+        "status": "processing",
+        "progress": 0
+    }
+
+@router.get("/{document_id}/progress")
+async def get_processing_progress(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current processing progress for a document"""
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.tenant_id == current_user.tenant_id
+    ).first()
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found"
+        )
+    
+    # Get latest log to determine stage
+    latest_log = db.query(ProcessingLog).filter(
+        ProcessingLog.document_id == document_id
+    ).order_by(ProcessingLog.created_at.desc()).first()
+    
+    # Calculate progress based on stage
+    progress = 0
+    stage = "starting"
+    
+    if latest_log:
+        stage = latest_log.stage
+        if stage == 'processing_start':
+            progress = 10
+        elif stage == 'ocr':
+            progress = 40
+        elif stage == 'llm':
+            progress = 70
+        elif stage == 'validation':
+            progress = 85
+        elif stage == 'completed':
+            progress = 100
+        elif stage == 'error':
+            progress = 100
+    
+    return {
+        "document_id": document_id,
+        "status": document.status.value,
+        "progress": progress,
+        "stage": stage,
+        "processing_started_at": document.processing_started_at.isoformat() if document.processing_started_at else None,
+        "processing_completed_at": document.processing_completed_at.isoformat() if document.processing_completed_at else None
     }
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
