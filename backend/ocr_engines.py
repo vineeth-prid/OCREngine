@@ -155,6 +155,10 @@ class OCREngine:
     
     def process_with_routing(self, image_path: str) -> Dict:
         """Process image with intelligent OCR routing"""
+        # Convert PDF to image if needed
+        if image_path.lower().endswith('.pdf'):
+            image_path = self.convert_pdf_to_image(image_path)
+        
         quality_score = self.assess_quality(image_path)
         
         results = []
