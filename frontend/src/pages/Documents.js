@@ -161,8 +161,15 @@ function Documents({ user, onLogout }) {
     if (doc.processing_started_at && doc.processing_completed_at) {
       const start = new Date(doc.processing_started_at);
       const end = new Date(doc.processing_completed_at);
-      const seconds = Math.round((end - start) / 1000);
-      return seconds > 0 ? `${seconds}s` : 'N/A';
+      const totalSeconds = Math.round((end - start) / 1000);
+      
+      if (totalSeconds < 60) {
+        return `${totalSeconds}s`;
+      } else {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}m ${seconds}s`;
+      }
     }
     return 'N/A';
   };
