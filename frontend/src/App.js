@@ -7,7 +7,7 @@ import Dashboard from './pages/Dashboard';
 import FormBuilder from './pages/FormBuilder';
 import Documents from './pages/Documents';
 import AdminPanel from './pages/AdminPanel';
-import { authAPI, userAPI } from './services/api';
+import { authAPI } from './services/api';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
