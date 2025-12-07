@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 function Navbar({ user, onLogout }) {
   const location = useLocation();
+  const isAdmin = user?.roles && user.roles.includes('admin');
 
   const isActive = (path) => location.pathname === path;
 
