@@ -17,10 +17,10 @@ def init_database():
         if existing_roles == 0:
             print("Creating default roles...")
             roles = [
-                Role(name=UserRole.ADMIN, description="System administrator with full access", permissions={"all": True}),
-                Role(name=UserRole.MANAGER, description="Can manage documents and schemas", permissions={"documents": ["read", "write", "delete"], "schemas": ["read", "write"]}),
-                Role(name=UserRole.REVIEWER, description="Can review and approve documents", permissions={"documents": ["read", "review"]}),
-                Role(name=UserRole.VIEWER, description="Can only view documents", permissions={"documents": ["read"]}),
+                Role(name=RoleEnum.ADMIN, description="System administrator with full access", permissions={"all": True}),
+                Role(name=RoleEnum.MANAGER, description="Can manage documents and schemas", permissions={"documents": ["read", "write", "delete"], "schemas": ["read", "write"]}),
+                Role(name=RoleEnum.REVIEWER, description="Can review and approve documents", permissions={"documents": ["read", "review"]}),
+                Role(name=RoleEnum.VIEWER, description="Can only view documents", permissions={"documents": ["read"]}),
             ]
             db.add_all(roles)
             db.commit()
