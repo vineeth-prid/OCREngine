@@ -219,7 +219,7 @@ Return only JSON with field names as keys and extracted values. Include confiden
                 print("Local model failed, falling back to cloud")
         
         # Use cloud LLM with smart model selection
-        if self.openai_client:
+        if self.emergent_llm_key:
             use_mini = is_simple  # Use mini for simple docs
             result = self.process_with_cloud_llm(model, ocr_text, schema_fields, use_mini)
             result['model_type'] = 'cloud'
