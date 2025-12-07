@@ -18,12 +18,17 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      authAPI.getCurrentUser()
-        .then(response => {
-          setUser(response.data);
+      Promise.all([
+        authAPI.getCurrentUser(),
+        userAPI.getRoles(JSON.parse(localStorage.getItem('user') || '{}').id || 1)
+      ])
+        .then(([userResponse, rolesResponse]) => {
+          setUser(userResponse.data);
+          setUserRoles(rolesResponse.data || []);
           setIsAuthenticated(true);
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('Auth error:', err);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         })
