@@ -100,62 +100,70 @@ function AdminPanel({ user, onLogout }) {
           </div>
         ) : (
           <div>
-            {activeTab === 'overview' && stats && (
+            {activeTab === 'overview' && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Tenants</h3>
-                    <p className="text-3xl font-bold text-gray-900">{stats.tenants.total}</p>
-                  </div>
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Users</h3>
-                    <p className="text-3xl font-bold text-gray-900">{stats.users.total}</p>
-                  </div>
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Documents</h3>
-                    <p className="text-3xl font-bold text-gray-900">{stats.documents.total}</p>
-                  </div>
-                </div>
+                {stats ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">Total Tenants</h3>
+                        <p className="text-3xl font-bold text-gray-900">{stats.tenants?.total || 0}</p>
+                      </div>
+                      <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">Total Users</h3>
+                        <p className="text-3xl font-bold text-gray-900">{stats.users?.total || 0}</p>
+                      </div>
+                      <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">Total Documents</h3>
+                        <p className="text-3xl font-bold text-gray-900">{stats.documents?.total || 0}</p>
+                      </div>
+                    </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Subscriptions</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Free Tier</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.subscriptions.free}</p>
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <h2 className="text-lg font-semibold text-gray-900 mb-4">Subscriptions</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Free Tier</p>
+                          <p className="text-2xl font-bold text-gray-900">{stats.subscriptions?.free || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Standard Tier</p>
+                          <p className="text-2xl font-bold text-gray-900">{stats.subscriptions?.standard || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Professional Tier</p>
+                          <p className="text-2xl font-bold text-gray-900">{stats.subscriptions?.professional || 0}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Standard Tier</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.subscriptions.standard}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Professional Tier</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.subscriptions.professional}</p>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Status</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Uploaded</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.documents.uploaded}</p>
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <h2 className="text-lg font-semibold text-gray-900 mb-4">Document Status</h2>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Uploaded</p>
+                          <p className="text-2xl font-bold text-blue-600">{stats.documents?.uploaded || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Processing</p>
+                          <p className="text-2xl font-bold text-yellow-600">{stats.documents?.processing || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Completed</p>
+                          <p className="text-2xl font-bold text-green-600">{stats.documents?.completed || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Failed</p>
+                          <p className="text-2xl font-bold text-red-600">{stats.documents?.failed || 0}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Processing</p>
-                      <p className="text-2xl font-bold text-blue-600">{stats.documents.processing}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Completed</p>
-                      <p className="text-2xl font-bold text-green-600">{stats.documents.completed}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Failed</p>
-                      <p className="text-2xl font-bold text-red-600">{stats.documents.failed}</p>
-                    </div>
+                  </>
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                    <p className="text-yellow-800">Unable to load admin statistics. Please check your permissions.</p>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
